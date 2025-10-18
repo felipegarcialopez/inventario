@@ -1,0 +1,1247 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Gestión de Inventarios</title>
+
+    <!-- Librerías CDN actualizadas -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/3.0.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 15px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        /* Estilos para el login */
+        .login-container {
+            width: 100%;
+            max-width: 400px;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+            overflow: hidden;
+            padding: 30px;
+        }
+        .login-header {
+            background: linear-gradient(45deg, #2c3e50, #3498db);
+            color: white;
+            padding: 25px 20px;
+            text-align: center;
+            margin: -30px -30px 25px -30px;
+        }
+        .login-header h1 {
+            font-size: 1.5em;
+            margin-bottom: 8px;
+            text-shadow: 1px 1px 3px rgba(0,0,0,0.3);
+        }
+        .login-form .form-group {
+            margin-bottom: 18px;
+        }
+        .login-form label {
+            display: block;
+            margin-bottom: 6px;
+            font-weight: 600;
+            color: #2c3e50;
+            font-size: 0.9em;
+        }
+        .login-form input {
+            width: 100%;
+            padding: 12px 12px;
+            border: 2px solid #e1e8ed;
+            border-radius: 8px;
+            font-size: 1em;
+            transition: all 0.3s ease;
+            background: white;
+        }
+        .login-form input:focus {
+            outline: none;
+            border-color: #3498db;
+            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
+        }
+        .login-btn {
+            background: linear-gradient(45deg, #3498db, #2980b9);
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1em;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(52, 152, 219, 0.3);
+            display: block;
+            width: 100%;
+            text-align: center;
+        }
+        .login-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(52, 152, 219, 0.4);
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+            overflow: hidden;
+            display: none; /* Oculto inicialmente hasta el login */
+        }
+        .header {
+            background: linear-gradient(45deg, #2c3e50, #3498db);
+            color: white;
+            padding: 25px 20px;
+            text-align: center;
+            position: relative;
+        }
+        .header h1 {
+            font-size: 1.8em;
+            margin-bottom: 8px;
+            text-shadow: 1px 1px 3px rgba(0,0,0,0.3);
+        }
+        .header p {
+            font-size: 0.9em;
+            opacity: 0.9;
+        }
+        /* Mostrar usuario en el encabezado */
+        .user-display {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+            padding: 10px 15px;
+            margin: 10px 0 0;
+            font-size: 1.1em;
+            font-weight: 600;
+            display: inline-block;
+            color: white;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        /* Botón de cerrar sesión */
+        .logout-btn {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            padding: 8px 15px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.9em;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(5px);
+        }
+        .logout-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        }
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 20px;
+            padding: 20px;
+        }
+        .input-section {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+        }
+        .results-section {
+            background: #ffffff;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+        }
+        .form-group {
+            margin-bottom: 18px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 6px;
+            font-weight: 600;
+            color: #2c3e50;
+            font-size: 0.9em;
+        }
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 12px 12px;
+            border: 2px solid #e1e8ed;
+            border-radius: 8px;
+            font-size: 1em;
+            transition: all 0.3s ease;
+            background: white;
+        }
+        .form-group input:focus, .form-group select:focus {
+            outline: none;
+            border-color: #3498db;
+            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
+        }
+        .btn {
+            background: linear-gradient(45deg, #3498db, #2980b9);
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1em;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(52, 152, 219, 0.3);
+            display: block;
+            width: 100%;
+            text-align: center;
+        }
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(52, 152, 219, 0.4);
+        }
+        .btn-success {
+            background: linear-gradient(45deg, #27ae60, #229954);
+            box-shadow: 0 4px 12px rgba(39, 174, 96, 0.3);
+        }
+        .btn-danger {
+            background: linear-gradient(45deg, #e74c3c, #c0392b);
+            box-shadow: 0 4px 12px rgba(231, 76, 60, 0.3);
+        }
+        .btn-warning {
+            background: linear-gradient(45deg, #f39c12, #e67e22);
+            box-shadow: 0 4px 12px rgba(243, 156, 18, 0.3);
+        }
+        .btn-small {
+            padding: 8px 12px;
+            font-size: 0.85em;
+            min-width: 60px;
+        }
+        .method-selector {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+        @media (min-width: 768px) {
+            .method-selector {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+        .method-card {
+            background: white;
+            border: 3px solid #e1e8ed;
+            border-radius: 12px;
+            padding: 18px 15px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+        .method-card.active {
+            border-color: #3498db;
+            background: linear-gradient(135deg, #3498db, #2980b9);
+            color: white;
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(52, 152, 219, 0.3);
+        }
+        .method-card h3 {
+            font-size: 1.1em;
+            margin-bottom: 5px;
+        }
+        .method-card p {
+            font-size: 0.8em;
+            opacity: 0.7;
+        }
+        .status-badge {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 0.65em;
+            font-weight: bold;
+        }
+        .legal { background: #28a745; color: white; }
+        .illegal { background: #dc3545; color: white; }
+        .special { background: #ffc107; color: black; }
+        .transactions-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+            display: block;
+            max-width: 100%;
+            overflow-x: auto;
+        }
+        .transactions-table th {
+            background: linear-gradient(45deg, #34495e, #2c3e50);
+            color: white;
+            padding: 12px 8px;
+            text-align: left;
+            font-weight: 600;
+            font-size: 0.85em;
+        }
+        .transactions-table td {
+            padding: 10px 8px;
+            border-bottom: 1px solid #ecf0f1;
+            font-size: 0.85em;
+        }
+        .transactions-table tbody tr:hover {
+            background-color: #f8f9fa;
+        }
+        .transaction-row.compra {
+            background-color: #e8f5e8;
+        }
+        .transaction-row.venta {
+            background-color: #fff3e0;
+        }
+        .results-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 15px;
+            margin-top: 20px;
+        }
+        @media (min-width: 768px) {
+            .results-grid {
+                grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            }
+        }
+        .result-card {
+            background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+            border-radius: 12px;
+            padding: 18px 15px;
+            text-align: center;
+            border-left: 4px solid #3498db;
+            transition: transform 0.3s ease;
+        }
+        .result-card:hover {
+            transform: translateY(-3px);
+        }
+        .result-card h3 {
+            color: #2c3e50;
+            margin-bottom: 12px;
+            font-size: 1.1em;
+        }
+        .result-value {
+            font-size: 1.6em;
+            font-weight: bold;
+            color: #3498db;
+            margin: 8px 0;
+        }
+        .fiscal-impact {
+            background: linear-gradient(135deg, #ff6b6b, #ee5a52);
+            color: white;
+            border-radius: 12px;
+            padding: 18px 15px;
+            margin-top: 20px;
+        }
+        .fiscal-impact h3 {
+            margin-bottom: 12px;
+            font-size: 1.2em;
+        }
+        .tax-comparison {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 10px;
+            margin-top: 12px;
+        }
+        @media (min-width: 768px) {
+            .tax-comparison {
+                grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            }
+        }
+        .tax-item {
+            background: rgba(255,255,255,0.15);
+            padding: 12px 10px;
+            border-radius: 8px;
+            text-align: center;
+        }
+        .tax-item h4 {
+            margin-bottom: 6px;
+            font-size: 0.85em;
+        }
+        .tax-amount {
+            font-size: 1.1em;
+            font-weight: bold;
+        }
+        .alert {
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 16px;
+            border-left: 4px solid;
+            font-size: 0.9em;
+        }
+        .alert-warning {
+            background-color: #fff3cd;
+            border-color: #ffc107;
+            color: #856404;
+        }
+        .alert-info {
+            background-color: #d1ecf1;
+            border-color: #17a2b8;
+            color: #0c5460;
+        }
+        .alert-success {
+            background-color: #d4edda;
+            border-color: #28a745;
+            color: #155724;
+        }
+        .empty-state {
+            text-align: center;
+            padding: 30px 20px;
+            color: #6c757d;
+            font-size: 0.95em;
+        }
+        .empty-state h3 {
+            margin-bottom: 12px;
+            font-size: 1.3em;
+        }
+        .success-message {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 9999;
+            min-width: 280px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            animation: slideIn 0.3s ease-out;
+            font-size: 0.95em;
+            padding: 12px 16px;
+        }
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+        .btn-group {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        @media (min-width: 768px) {
+            .btn-group {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+        /* Diseño responsivo para el campo de precio y botón calcular */
+        .price-input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        @media (min-width: 576px) {
+            .price-input-group {
+                flex-direction: row;
+                align-items: center;
+                flex-wrap: wrap;
+            }
+        }
+        .price-input-group > input {
+            flex: 1;
+            min-width: 180px;
+        }
+        .price-input-group > div {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        .price-input-group select,
+        .price-input-group button {
+            font-size: 0.9em;
+            padding: 8px 10px;
+            white-space: nowrap;
+        }
+        @media (max-width: 576px) {
+            .price-input-group select,
+            .price-input-group button {
+                width: 100%;
+                font-size: 0.85em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Sistema de Login -->
+    <div id="loginContainer" class="login-container">
+        <div class="login-header">
+            <h1>🔐 Iniciar Sesión</h1>
+            <p>Sistema de Gestión de Inventarios</p>
+        </div>
+        <form id="loginForm" class="login-form">
+            <div class="form-group">
+                <label for="loginUsuario">👤 Usuario:</label>
+                <input type="text" id="loginUsuario" placeholder="Ingrese su nombre de usuario" required>
+            </div>
+            <div class="form-group">
+                <label for="loginPassword">🔒 Contraseña:</label>
+                <input type="password" id="loginPassword" placeholder="Ingrese su contraseña" required>
+            </div>
+            <button type="submit" class="login-btn">🚀 Acceder al Sistema</button>
+        </form>
+        <div id="loginError" class="alert alert-warning" style="display: none; margin-top: 15px;">
+            Credenciales incorrectas. Por favor, intente nuevamente.
+        </div>
+    </div>
+
+    <!-- Contenido principal (oculto inicialmente) -->
+    <div id="mainContainer" class="container" style="display: none;">
+        <div class="header">
+            <h1>🏭 Sistema de Gestión de Inventarios</h1>
+            <p>Análisis comparativo PEPS, UEPS y Promedio Ponderado con impacto fiscal</p>
+            <div class="user-display" id="userDisplay">
+                Usuario: No registrado
+            </div>
+            <!-- Botón de cerrar sesión -->
+            <button id="logoutBtn" class="logout-btn">🚪 Cerrar Sesión</button>
+        </div>
+        <div class="main-content">
+            <!-- El resto del contenido del sistema de inventarios se mantiene igual -->
+            <div class="input-section">
+                <h2>📊 Panel de Control</h2>
+                <div class="alert alert-info">
+                    <strong>💡 Información:</strong> En México, fiscalmente solo PEPS está permitido. UEPS y Promedio se muestran para comparación académica.
+                </div>
+                <div class="form-group">
+                    <label for="usuario">👤 Usuario:</label>
+                    <input type="text" id="usuario" placeholder="Ej: Juan Pérez" maxlength="100">
+                </div>
+                <div class="method-selector">
+                    <div class="method-card active" data-method="peps">
+                        <div class="status-badge legal">LEGAL</div>
+                        <h3>PEPS</h3>
+                        <p>Primeras Entradas, Primeras Salidas</p>
+                    </div>
+                    <div class="method-card" data-method="ueps">
+                        <div class="status-badge illegal">NO LEGAL</div>
+                        <h3>UEPS</h3>
+                        <p>Últimas Entradas, Primeras Salidas</p>
+                    </div>
+                    <div class="method-card" data-method="promedio">
+                        <div class="status-badge special">ESPECIAL</div>
+                        <h3>PROMEDIO</h3>
+                        <p>Costo Promedio Ponderado</p>
+                    </div>
+                </div>
+                <form id="transactionForm">
+                    <div class="form-group">
+                        <label for="tipoTransaccion">📝 Tipo de Transacción:</label>
+                        <select id="tipoTransaccion" required>
+                            <option value="">Seleccionar tipo</option>
+                            <option value="compra">🛒 Compra</option>
+                            <option value="venta">💰 Venta</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="fecha">📅 Fecha:</label>
+                        <input type="date" id="fecha" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="cantidad">📦 Cantidad:</label>
+                        <input type="number" id="cantidad" min="1" step="1" required placeholder="Ej: 1,500">
+                    </div>
+                    <div class="form-group">
+                        <label for="precio" id="precioLabel">💵 Precio Unitario:</label>
+                        <div class="price-input-group">
+                            <input type="number" id="precio" min="0.01" step="0.01" required placeholder="Ej: 4299.33">
+                            <div>
+                                <select id="margenSelector">
+                                    <option value="1.50">50% sobre costo</option>
+                                    <option value="1.70" selected>70% sobre costo</option>
+                                    <option value="2.00">100% sobre costo</option>
+                                    <option value="2.50">150% sobre costo</option>
+                                </select>
+                                <button type="button" id="calcularPrecioVenta" class="btn btn-warning btn-small">
+                                    💡 Calcular
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="concepto">📋 Concepto:</label>
+                        <input type="text" id="concepto" placeholder="Ej: Televisores LED 50 pulgadas" maxlength="100">
+                    </div>
+                    <button type="submit" class="btn btn-success">
+                        ➕ Agregar Transacción
+                    </button>
+                </form>
+                <div class="btn-group">
+                    <button id="loadSample" class="btn btn-warning">
+                        📊 Datos Ejemplo
+                    </button>
+                    <button id="clearAll" class="btn btn-danger">
+                        🗑️ Limpiar Todo
+                    </button>
+                </div>
+                <button id="exportPDF" class="btn" style="margin-top: 12px;">
+                    📄 Descargar Reporte en PDF
+                </button>
+            </div>
+            <div class="results-section" id="pdfContent">
+                <h2>📈 Resultados del Análisis</h2>
+                <div id="results-content">
+                    <div id="empty-state" class="empty-state">
+                        <h3>🎯 ¡Comienza tu análisis!</h3>
+                        <p>Selecciona un método de valuación y agrega transacciones para ver los resultados.</p>
+                        <p><strong>Tip:</strong> Usa "Datos Ejemplo" para una demostración rápida.</p>
+                    </div>
+                    <div class="results-grid" id="resultsGrid" style="display: none;"></div>
+                    <div class="fiscal-impact" id="fiscalImpact" style="display: none;">
+                        <h3>🏛️ Impacto Fiscal Comparativo</h3>
+                        <p style="margin-bottom: 10px;">Comparación de impuestos (ISR 30% + IVA 16%)</p>
+                        <div class="tax-comparison" id="taxComparison"></div>
+                        <div style="margin-top: 12px; font-size: 0.85em; opacity: 0.9;">
+                            <strong>Nota:</strong> Solo PEPS es fiscalmente deducible en México
+                        </div>
+                    </div>
+                    <div style="margin-top: 25px;">
+                        <h2>📊 Historial de Transacciones</h2>
+                        <div id="transactionsContainer">
+                            <div class="empty-state">
+                                <p>No hay transacciones registradas.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Sistema de autenticación MEJORADO - Solo valida contraseña
+        document.getElementById('loginForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const usuario = document.getElementById('loginUsuario').value.trim();
+            const password = document.getElementById('loginPassword').value;
+            const errorDiv = document.getElementById('loginError');
+            
+            // Solo validamos la contraseña, cualquier nombre es aceptado
+            const validPassword = "conta456";
+            
+            console.log("Usuario ingresado:", usuario);
+            console.log("Contraseña ingresada:", password);
+            console.log("Contraseña válida:", validPassword);
+            
+            if (usuario && password === validPassword) {
+                // Login exitoso - cualquier nombre es válido mientras no esté vacío
+                document.getElementById('loginContainer').style.display = 'none';
+                document.getElementById('mainContainer').style.display = 'block';
+                
+                // Establecer el usuario en el sistema
+                document.getElementById('usuario').value = usuario;
+                if (window.inventoryManager) {
+                    window.inventoryManager.usuario = usuario;
+                    window.inventoryManager.updateUserDisplay();
+                }
+            } else {
+                // Credenciales incorrectas
+                errorDiv.style.display = 'block';
+                document.getElementById('loginPassword').value = '';
+            }
+        });
+
+        // Función para cerrar sesión
+        document.getElementById('logoutBtn').addEventListener('click', function() {
+            if (confirm('¿Está seguro de que desea cerrar sesión?')) {
+                // Ocultar el contenido principal
+                document.getElementById('mainContainer').style.display = 'none';
+                
+                // Mostrar el formulario de login
+                document.getElementById('loginContainer').style.display = 'block';
+                
+                // Limpiar los campos del formulario de login
+                document.getElementById('loginUsuario').value = '';
+                document.getElementById('loginPassword').value = '';
+                document.getElementById('loginError').style.display = 'none';
+                
+                // Limpiar los campos del formulario principal
+                document.getElementById('usuario').value = '';
+                
+                // Mostrar mensaje de éxito
+                if (window.inventoryManager) {
+                    window.inventoryManager.showSuccess('✅ Sesión cerrada correctamente');
+                }
+            }
+        });
+
+        // El resto del código de InventoryManager se mantiene igual
+        class InventoryManager {
+            constructor() {
+                this.transactions = [];
+                this.currentMethod = 'peps';
+                this.usuario = 'Usuario no registrado';
+                this.initializeEventListeners();
+                this.setTodayDate();
+            }
+
+            initializeEventListeners() {
+                document.querySelectorAll('.method-card').forEach(card => {
+                    card.addEventListener('click', () => {
+                        document.querySelectorAll('.method-card').forEach(c => c.classList.remove('active'));
+                        card.classList.add('active');
+                        this.currentMethod = card.dataset.method;
+                        this.updateResults();
+                    });
+                });
+
+                document.getElementById('transactionForm').addEventListener('submit', (e) => {
+                    e.preventDefault();
+                    this.addTransaction();
+                });
+
+                document.getElementById('tipoTransaccion').addEventListener('change', (e) => {
+                    const label = document.getElementById('precioLabel');
+                    if (e.target.value === 'compra') {
+                        label.textContent = '💵 Precio de Compra Unitario:';
+                    } else if (e.target.value === 'venta') {
+                        label.textContent = '💰 Precio de Venta Unitario:';
+                    }
+                });
+
+                document.getElementById('usuario').addEventListener('change', () => {
+                    this.usuario = document.getElementById('usuario').value.trim() || 'Usuario no registrado';
+                    this.updateUserDisplay();
+                });
+
+                document.getElementById('calcularPrecioVenta').addEventListener('click', () => {
+                    const tipo = document.getElementById('tipoTransaccion').value;
+                    const precioInput = document.getElementById('precio');
+                    const margenSelector = document.getElementById('margenSelector');
+
+                    if (tipo !== 'venta') {
+                        this.showError('⚠️ Esta función solo aplica cuando la transacción es una VENTA.');
+                        return;
+                    }
+
+                    const compras = this.transactions
+                        .filter(t => t.tipo === 'compra')
+                        .sort((a, b) => b.fecha - a.fecha);
+
+                    if (compras.length === 0) {
+                        this.showError('❌ No hay compras registradas para calcular el precio de venta.');
+                        return;
+                    }
+
+                    const costoUnitario = compras[0].precio;
+                    const factor = parseFloat(margenSelector.value);
+                    const precioVenta = costoUnitario * factor;
+
+                    precioInput.value = precioVenta.toFixed(2);
+
+                    const margenPorcentaje = (factor - 1) * 100;
+                    this.showSuccess(`✅ Precio calculado: ${this.formatMoney(precioVenta)} (${margenPorcentaje}% sobre costo de ${this.formatMoney(costoUnitario)})`);
+                });
+
+                document.getElementById('clearAll').addEventListener('click', () => {
+                    this.clearAllTransactions();
+                });
+
+                document.getElementById('loadSample').addEventListener('click', () => {
+                    this.loadSampleData();
+                });
+
+                document.getElementById('exportPDF').addEventListener('click', () => {
+                    this.exportToPDF();
+                });
+            }
+
+            setTodayDate() {
+                const today = new Date().toISOString().split('T')[0];
+                document.getElementById('fecha').value = today;
+            }
+
+            updateUserDisplay() {
+                const display = document.getElementById('userDisplay');
+                display.textContent = `Usuario: ${this.usuario}`;
+            }
+
+            addTransaction() {
+                try {
+                    const tipo = document.getElementById('tipoTransaccion').value.trim();
+                    const fecha = document.getElementById('fecha').value;
+                    const cantidad = parseInt(document.getElementById('cantidad').value);
+                    const precio = parseFloat(document.getElementById('precio').value);
+                    const concepto = document.getElementById('concepto').value.trim() || 'Sin concepto';
+
+                    if (!tipo || !fecha || isNaN(cantidad) || isNaN(precio)) {
+                        this.showError('❌ Por favor complete todos los campos obligatorios');
+                        return;
+                    }
+                    if (cantidad <= 0) {
+                        this.showError('❌ La cantidad debe ser mayor a 0');
+                        return;
+                    }
+                    if (precio <= 0) {
+                        this.showError('❌ El precio debe ser mayor a 0');
+                        return;
+                    }
+                    if (tipo === 'venta') {
+                        const available = this.getAvailableInventory();
+                        if (cantidad > available) {
+                            this.showError(`❌ No hay suficiente inventario. Disponible: ${this.formatNumber(available)} unidades`);
+                            return;
+                        }
+                    }
+
+                    const transaction = {
+                        id: Date.now() + Math.random(),
+                        tipo,
+                        fecha: new Date(fecha + 'T12:00:00'),
+                        cantidad,
+                        precio,
+                        concepto,
+                        total: cantidad * precio
+                    };
+
+                    this.transactions.push(transaction);
+                    this.updateDisplay();
+                    this.clearForm();
+                    this.showSuccess(`✅ ${tipo === 'compra' ? 'Compra' : 'Venta'} agregada: ${this.formatNumber(cantidad)} unidades`);
+                } catch (error) {
+                    console.error('Error al agregar transacción:', error);
+                    this.showError('❌ Error al procesar la transacción');
+                }
+            }
+
+            getAvailableInventory() {
+                let totalCompras = 0;
+                let totalVentas = 0;
+                this.transactions.forEach(t => {
+                    if (t.tipo === 'compra') totalCompras += t.cantidad;
+                    if (t.tipo === 'venta') totalVentas += t.cantidad;
+                });
+                return Math.max(0, totalCompras - totalVentas);
+            }
+
+            calculatePEPS() {
+                const compras = this.transactions
+                    .filter(t => t.tipo === 'compra')
+                    .sort((a, b) => a.fecha - b.fecha)
+                    .map(t => ({ ...t, remaining: t.cantidad }));
+                const ventas = this.transactions
+                    .filter(t => t.tipo === 'venta')
+                    .sort((a, b) => a.fecha - b.fecha);
+                let costoVentas = 0;
+                let ventasTotal = 0;
+                for (const venta of ventas) {
+                    ventasTotal += venta.total;
+                    let remainingToSell = venta.cantidad;
+                    for (let i = 0; i < compras.length && remainingToSell > 0; i++) {
+                        const compra = compras[i];
+                        if (compra.remaining > 0) {
+                            const cantidadTomada = Math.min(remainingToSell, compra.remaining);
+                            costoVentas += cantidadTomada * compra.precio;
+                            compra.remaining -= cantidadTomada;
+                            remainingToSell -= cantidadTomada;
+                        }
+                    }
+                }
+                const inventarioFinal = compras.reduce((sum, c) => sum + (c.remaining * c.precio), 0);
+                const utilidadBruta = ventasTotal - costoVentas;
+                return { costoVentas, inventarioFinal, utilidadBruta, ventasTotal };
+            }
+
+            calculateUEPS() {
+                const compras = this.transactions
+                    .filter(t => t.tipo === 'compra')
+                    .sort((a, b) => a.fecha - b.fecha)
+                    .map(t => ({ ...t, remaining: t.cantidad }));
+                const ventas = this.transactions
+                    .filter(t => t.tipo === 'venta')
+                    .sort((a, b) => a.fecha - b.fecha);
+                let costoVentas = 0;
+                let ventasTotal = 0;
+                for (const venta of ventas) {
+                    ventasTotal += venta.total;
+                    let remainingToSell = venta.cantidad;
+                    for (let i = compras.length - 1; i >= 0 && remainingToSell > 0; i--) {
+                        const compra = compras[i];
+                        if (compra.remaining > 0) {
+                            const cantidadTomada = Math.min(remainingToSell, compra.remaining);
+                            costoVentas += cantidadTomada * compra.precio;
+                            compra.remaining -= cantidadTomada;
+                            remainingToSell -= cantidadTomada;
+                        }
+                    }
+                }
+                const inventarioFinal = compras.reduce((sum, c) => sum + (c.remaining * c.precio), 0);
+                const utilidadBruta = ventasTotal - costoVentas;
+                return { costoVentas, inventarioFinal, utilidadBruta, ventasTotal };
+            }
+
+            calculatePromedio() {
+                let costoVentas = 0;
+                let ventasTotal = 0;
+                let totalCosto = 0;
+                let totalCantidad = 0;
+                const sortedTransactions = [...this.transactions].sort((a, b) => a.fecha - b.fecha);
+                for (const transaction of sortedTransactions) {
+                    if (transaction.tipo === 'compra') {
+                        totalCosto += transaction.total;
+                        totalCantidad += transaction.cantidad;
+                    } else if (transaction.tipo === 'venta') {
+                        const costoPromedio = totalCantidad > 0 ? totalCosto / totalCantidad : 0;
+                        const costoVenta = transaction.cantidad * costoPromedio;
+                        costoVentas += costoVenta;
+                        ventasTotal += transaction.total;
+                        totalCosto = Math.max(0, totalCosto - costoVenta);
+                        totalCantidad = Math.max(0, totalCantidad - transaction.cantidad);
+                    }
+                }
+                const inventarioFinal = totalCosto;
+                const utilidadBruta = ventasTotal - costoVentas;
+                return { costoVentas, inventarioFinal, utilidadBruta, ventasTotal };
+            }
+
+            updateResults() {
+                if (this.transactions.length === 0) {
+                    this.showEmptyState();
+                    return;
+                }
+                let results;
+                switch (this.currentMethod) {
+                    case 'peps': results = this.calculatePEPS(); break;
+                    case 'ueps': results = this.calculateUEPS(); break;
+                    case 'promedio': results = this.calculatePromedio(); break;
+                }
+                this.displayResults(results);
+                this.updateFiscalImpact();
+            }
+
+            showEmptyState() {
+                document.getElementById('empty-state').style.display = 'block';
+                document.getElementById('resultsGrid').style.display = 'none';
+                document.getElementById('fiscalImpact').style.display = 'none';
+            }
+
+            displayResults(results) {
+                document.getElementById('empty-state').style.display = 'none';
+                document.getElementById('resultsGrid').style.display = 'grid';
+                const resultsGrid = document.getElementById('resultsGrid');
+                resultsGrid.innerHTML = `
+                    <div class="result-card">
+                        <h3>💰 Ventas Totales</h3>
+                        <div class="result-value">${this.formatMoney(results.ventasTotal)}</div>
+                        <small>Ingresos por ventas</small>
+                    </div>
+                    <div class="result-card">
+                        <h3>📉 Costo de Ventas</h3>
+                        <div class="result-value">${this.formatMoney(results.costoVentas)}</div>
+                        <small>Método: ${this.getMethodName()}</small>
+                    </div>
+                    <div class="result-card">
+                        <h3>📈 Utilidad Bruta</h3>
+                        <div class="result-value">${this.formatMoney(results.utilidadBruta)}</div>
+                        <small>Ventas - Costo de Ventas</small>
+                    </div>
+                    <div class="result-card">
+                        <h3>📦 Inventario Final</h3>
+                        <div class="result-value">${this.formatMoney(results.inventarioFinal)}</div>
+                        <small>Valor en almacén</small>
+                    </div>
+                `;
+            }
+
+            updateFiscalImpact() {
+                const hasVentas = this.transactions.some(t => t.tipo === 'venta');
+                if (!hasVentas) {
+                    document.getElementById('fiscalImpact').style.display = 'none';
+                    return;
+                }
+                try {
+                    const pepsResults = this.calculatePEPS();
+                    const uepsResults = this.calculateUEPS();
+                    const promedioResults = this.calculatePromedio();
+
+                    const pepsTax = this.calculateTax(pepsResults.ventasTotal, pepsResults.utilidadBruta);
+                    const uepsTax = this.calculateTax(uepsResults.ventasTotal, uepsResults.utilidadBruta);
+                    const promedioTax = this.calculateTax(promedioResults.ventasTotal, promedioResults.utilidadBruta);
+
+                    document.getElementById('taxComparison').innerHTML = `
+                        <div class="tax-item">
+                            <h4>PEPS ✅</h4>
+                            <div class="tax-amount">${this.formatMoney(pepsTax.total)}</div>
+                            <small>ISR: ${this.formatMoney(pepsTax.isr)}<br>IVA: ${this.formatMoney(pepsTax.iva)}</small>
+                        </div>
+                        <div class="tax-item">
+                            <h4>UEPS ❌</h4>
+                            <div class="tax-amount">${this.formatMoney(uepsTax.total)}</div>
+                            <small>ISR: ${this.formatMoney(uepsTax.isr)}<br>IVA: ${this.formatMoney(uepsTax.iva)}</small>
+                        </div>
+                        <div class="tax-item">
+                            <h4>PROMEDIO ⚠️</h4>
+                            <div class="tax-amount">${this.formatMoney(promedioTax.total)}</div>
+                            <small>ISR: ${this.formatMoney(promedioTax.isr)}<br>IVA: ${this.formatMoney(promedioTax.iva)}</small>
+                        </div>
+                    `;
+                    document.getElementById('fiscalImpact').style.display = 'block';
+                } catch (error) {
+                    console.error('Error calculando impacto fiscal:', error);
+                    document.getElementById('fiscalImpact').style.display = 'none';
+                }
+            }
+
+            // ✅ IVA sobre Ventas Totales (16%), ISR sobre Utilidad Bruta (30%)
+            calculateTax(ventasTotal, utilidadBruta) {
+                const iva = ventasTotal * 0.16;
+                const isr = Math.max(0, utilidadBruta * 0.30);
+                return {
+                    isr,
+                    iva,
+                    total: isr + iva
+                };
+            }
+
+            updateDisplay() {
+                this.updateTransactionsTable();
+                this.updateResults();
+            }
+
+            updateTransactionsTable() {
+                const container = document.getElementById('transactionsContainer');
+                if (this.transactions.length === 0) {
+                    container.innerHTML = `<div class="empty-state"><p>No hay transacciones registradas.</p></div>`;
+                    return;
+                }
+                let tableHTML = `
+                    <table class="transactions-table">
+                        <thead>
+                            <tr>
+                                <th>Fecha</th>
+                                <th>Tipo</th>
+                                <th>Concepto</th>
+                                <th>Cant.</th>
+                                <th>Precio</th>
+                                <th>Total</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                `;
+                this.transactions
+                    .sort((a, b) => b.fecha - a.fecha)
+                    .forEach(transaction => {
+                        const typeIcon = transaction.tipo === 'compra' ? '🛒' : '💰';
+                        tableHTML += `
+                            <tr class="transaction-row ${transaction.tipo}">
+                                <td>${this.formatDate(transaction.fecha)}</td>
+                                <td>${typeIcon}</td>
+                                <td>${transaction.concepto}</td>
+                                <td>${this.formatNumber(transaction.cantidad)}</td>
+                                <td>${this.formatMoney(transaction.precio)}</td>
+                                <td>${this.formatMoney(transaction.total)}</td>
+                                <td>
+                                    <button class="btn btn-danger btn-small" onclick="inventoryManager.removeTransaction(${transaction.id})">🗑️</button>
+                                </td>
+                            </tr>
+                        `;
+                    });
+                tableHTML += `</tbody></table>`;
+
+                const inventarioDisponible = this.getAvailableInventory();
+                tableHTML += `
+                    <div class="alert alert-success" style="margin-top: 12px; padding: 10px;">
+                        <strong>📊 Resumen:</strong> 
+                        ${this.transactions.filter(t => t.tipo === 'compra').length} compras, 
+                        ${this.transactions.filter(t => t.tipo === 'venta').length} ventas. 
+                        Inventario: <strong>${this.formatNumber(inventarioDisponible)} unidades</strong>
+                    </div>
+                `;
+                container.innerHTML = tableHTML;
+            }
+
+            removeTransaction(id) {
+                if (confirm('¿Eliminar esta transacción?')) {
+                    this.transactions = this.transactions.filter(t => t.id !== id);
+                    this.updateDisplay();
+                    this.showSuccess('✅ Transacción eliminada');
+                }
+            }
+
+            clearAllTransactions() {
+                if (this.transactions.length === 0) {
+                    this.showError('ℹ️ No hay transacciones para eliminar');
+                    return;
+                }
+                if (confirm(`¿Eliminar todas las ${this.transactions.length} transacciones?`)) {
+                    this.transactions = [];
+                    this.updateDisplay();
+                    this.showSuccess('✅ Todas las transacciones eliminadas');
+                }
+            }
+
+            clearForm() {
+                document.getElementById('transactionForm').reset();
+                this.setTodayDate();
+                document.getElementById('tipoTransaccion').focus();
+            }
+
+            loadSampleData() {
+                if (this.transactions.length > 0 && !confirm('Reemplazar datos existentes?')) return;
+                this.transactions = [];
+                const baseDate = new Date();
+                baseDate.setMonth(baseDate.getMonth() - 2);
+                const sampleData = [
+                    { tipo: 'compra', dias: 0, cantidad: 1000, precio: 150.00, concepto: 'Lote 1' },
+                    { tipo: 'compra', dias: 5, cantidad: 1500, precio: 160.00, concepto: 'Lote 2' },
+                    { tipo: 'venta', dias: 10, cantidad: 800, precio: 280.00, concepto: 'Venta ABC' },
+                    { tipo: 'compra', dias: 15, cantidad: 2000, precio: 170.00, concepto: 'Lote 3' },
+                    { tipo: 'venta', dias: 20, cantidad: 1200, precio: 290.00, concepto: 'Venta XYZ' },
+                    { tipo: 'compra', dias: 23, cantidad: 800, precio: 175.00, concepto: 'Lote 4' },
+                    { tipo: 'venta', dias: 27, cantidad: 1000, precio: 295.00, concepto: 'Venta DEF' }
+                ];
+                sampleData.forEach(data => {
+                    const fecha = new Date(baseDate);
+                    fecha.setDate(fecha.getDate() + data.dias);
+                    this.transactions.push({
+                        id: Date.now() + Math.random(),
+                        tipo: data.tipo,
+                        fecha: fecha,
+                        cantidad: data.cantidad,
+                        precio: data.precio,
+                        concepto: data.concepto,
+                        total: data.cantidad * data.precio
+                    });
+                });
+                this.updateDisplay();
+                this.showSuccess('✅ Datos de ejemplo cargados');
+            }
+
+            exportToPDF() {
+                const nombreUsuario = this.usuario || 'Usuario no registrado';
+                const { jsPDF } = window.jspdf;
+
+                if (this.transactions.length === 0) {
+                    this.showError('❌ No hay datos para generar el PDF');
+                    return;
+                }
+
+                const element = document.getElementById('pdfContent');
+
+                html2canvas(element, {
+                    scale: 2,
+                    useCORS: true,
+                    backgroundColor: '#ffffff',
+                    logging: false,
+                    scrollX: 0,
+                    scrollY: 0
+                }).then(canvas => {
+                    const imgData = canvas.toDataURL('image/png');
+                    const pdf = new jsPDF('p', 'mm', 'a4');
+                    const pageWidth = pdf.internal.pageSize.getWidth();
+                    const pageHeight = pdf.internal.pageSize.getHeight();
+                    const imgWidth = pageWidth - 20;
+                    const imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+                    let heightLeft = imgHeight;
+                    let position = 10;
+
+                    pdf.setFontSize(16);
+                    pdf.setTextColor(44, 62, 80);
+                    pdf.text('Reporte de Análisis de Inventarios', 10, position);
+                    position += 10;
+
+                    pdf.setFontSize(12);
+                    pdf.setTextColor(52, 152, 219);
+                    pdf.text(`Usuario: ${nombreUsuario}`, 10, position);
+                    const now = new Date();
+                    const formattedTime = now.toLocaleTimeString('es-MX', {
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        hour12: true
+                    }).replace('AM', 'a.m.').replace('PM', 'p.m.');
+                    const formattedDate = this.formatDate(now);
+                    pdf.text(`Fecha: ${formattedDate}, ${formattedTime}`, 10, position + 6);
+                    position += 15;
+
+                    pdf.addImage(imgData, 'PNG', 10, position, imgWidth, imgHeight);
+                    heightLeft -= pageHeight - position;
+
+                    while (heightLeft > 0) {
+                        position = heightLeft - imgHeight + 15;
+                        pdf.addPage();
+                        pdf.addImage(imgData, 'PNG', 10, position, imgWidth, imgHeight);
+                        heightLeft -= pageHeight;
+                    }
+
+                    pdf.save(`reporte_inventarios_${nombreUsuario.split(' ')[0] || 'usuario'}.pdf`);
+                    this.showSuccess('✅ Reporte PDF generado correctamente');
+                }).catch(error => {
+                    console.error('Error generando PDF:', error);
+                    this.showError(`❌ Error al generar PDF: ${error.message}`);
+                });
+            }
+
+            getMethodName() {
+                return { 'peps': 'PEPS', 'ueps': 'UEPS', 'promedio': 'Promedio' }[this.currentMethod];
+            }
+
+            formatMoney(amount) {
+                if (amount === undefined || amount === null || isNaN(amount)) return '$0.00';
+                return new Intl.NumberFormat('es-MX', {
+                    style: 'currency',
+                    currency: 'MXN',
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2
+                }).format(Math.abs(amount));
+            }
+
+            formatNumber(number) {
+                if (number === undefined || number === null || isNaN(number)) return '0';
+                return new Intl.NumberFormat('es-MX').format(Math.abs(number));
+            }
+
+            formatDate(date) {
+                if (!date || !(date instanceof Date)) return 'Inválida';
+                return new Intl.DateTimeFormat('es-MX', {
+                    year: '2-digit',
+                    month: '2-digit',
+                    day: '2-digit'
+                }).format(date);
+            }
+
+            showSuccess(message) { this.showMessage(message, 'success'); }
+            showError(message) { this.showMessage(message, 'error'); }
+
+            showMessage(message, type) {
+                const existing = document.querySelector('.success-message');
+                if (existing) existing.remove();
+                const alert = document.createElement('div');
+                alert.className = `alert alert-${type === 'success' ? 'success' : 'warning'} success-message`;
+                alert.textContent = message;
+                document.body.appendChild(alert);
+                setTimeout(() => alert.remove(), 4000);
+            }
+        }
+
+        // Inicializar el sistema cuando se carga la página
+        let inventoryManager;
+        document.addEventListener('DOMContentLoaded', () => {
+            inventoryManager = new InventoryManager();
+            // Hacerlo global para que sea accesible desde los botones
+            window.inventoryManager = inventoryManager;
+        });
+    </script>
+</body>
+</html>
